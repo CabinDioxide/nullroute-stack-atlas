@@ -3,16 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stack Atlas · 技术栈、政治栈与世界地图</title>
+<title>Stack Atlas</title>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 <header>
   <div class="head-row">
     <h1>Stack Atlas</h1>
-    <span class="sub">技术栈、政治栈与世界地图 · technology stack, political stack, world map</span>
+    <div class="head-actions">
+      <span class="sub" data-i18n="subtitle">技术栈、政治栈与世界地图</span>
+      <div class="lang-switch" aria-label="Language">
+        <button type="button" data-lang-choice="zh" class="active">ZH</button>
+        <button type="button" data-lang-choice="en">EN</button>
+      </div>
+    </div>
   </div>
-  <p class="honest">公共可读的依赖<strong>探索</strong>界面，不是结论预言机。点国家 / chokepoint / 技术栈节点 / 政治栈节点，三图双向点亮。<span class="ev ev-needs-review">candidate alert</span> 只是待复查线索，不自动成结论；证据不足处显式标 <span class="ev ev-unknown">unknown / needs source</span>，不藏。</p>
+  <p class="honest" data-i18n-html="honest">公共可读的依赖<strong>探索</strong>界面，不是结论预言机。点国家、航道、技术栈节点或政治栈节点，三图双向点亮。候选告警只是待复查线索，不自动成结论；证据不足处显式标出，不藏。</p>
   <div class="legend" id="legend"></div>
   <div class="relation-legend" aria-label="Relationship visual grammar">
     <span class="rel-key rel-key-tech">tech</span>
@@ -22,22 +28,21 @@
   </div>
   <div class="view-toolbar" id="view-toolbar" aria-label="View mode controls"></div>
   <div class="mag-toolbar" id="mag-toolbar" aria-label="Magnitude Layer controls">
-    <button type="button" class="mag-toggle active" id="mag-toggle" aria-pressed="true">MAG on</button>
+    <button type="button" class="mag-toggle active" id="mag-toggle" aria-pressed="true">MAG</button>
     <div class="mag-filter-group" id="mag-filter-group" aria-label="Magnitude scale family filters"></div>
   </div>
 </header>
 
 <main>
-  <!-- 左：真实世界地图 -->
   <section class="pane" id="pane-world">
-    <div class="pane-head"><h2>World Map</h2><span class="pane-sub">真实世界底图 · Natural Earth 110m (Public Domain)</span></div>
+    <div class="pane-head"><h2 data-i18n="worldTitle">世界地图</h2><span class="pane-sub" data-i18n="worldSub">真实世界底图，Natural Earth 110m，公共领域</span></div>
     <div class="map-wrap">
       <div class="map-tools" aria-label="World map zoom controls">
-        <button type="button" data-map-zoom="in" title="放大 / Zoom in" aria-label="Zoom in">+</button>
-        <button type="button" data-map-zoom="out" title="缩小 / Zoom out" aria-label="Zoom out">−</button>
-        <button type="button" data-map-zoom="reset" title="复位 / Reset view" aria-label="Reset view">reset</button>
+        <button type="button" data-map-zoom="in" data-i18n-title="zoomIn" aria-label="Zoom in">+</button>
+        <button type="button" data-map-zoom="out" data-i18n-title="zoomOut" aria-label="Zoom out">−</button>
+        <button type="button" data-map-zoom="reset" data-i18n="reset" data-i18n-title="resetView" aria-label="Reset view">复位</button>
       </div>
-      <svg id="world" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World map · 滚轮缩放，拖拽平移">
+      <svg id="world" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World map">
         <g id="map-viewport">
           <g id="layer-countries"></g>
           <g id="layer-links"></g>
@@ -49,16 +54,14 @@
     </div>
   </section>
 
-  <!-- 右：技术栈地图 -->
   <section class="pane" id="pane-stack">
-    <div class="pane-head"><h2>Technology Stack Map</h2><span class="pane-sub">L0–L4 分层栈 · 点节点反向点亮世界</span></div>
+    <div class="pane-head"><h2 data-i18n="techTitle">技术栈地图</h2><span class="pane-sub" data-i18n="techSub">L0-L4 分层栈；点击节点反向点亮世界地图</span></div>
     <div class="stack-controls" id="stack-controls"></div>
     <div class="stack-scroll"><div id="stack-grid"></div></div>
   </section>
 
-  <!-- 右二：政治栈地图 -->
   <section class="pane" id="pane-political">
-    <div class="pane-head"><h2>Political Stack Map</h2><span class="pane-sub">P0–P4 政治控制栈 · 法域、联盟、国内政治与叙事</span></div>
+    <div class="pane-head"><h2 data-i18n="politicalTitle">政治栈地图</h2><span class="pane-sub" data-i18n="politicalSub">P0-P4 政治控制栈：法域、联盟、国内政治与叙事</span></div>
     <div class="political-controls" id="political-controls"></div>
     <div class="political-scroll"><div id="political-grid"></div></div>
   </section>
@@ -67,10 +70,10 @@
 <section class="guided-paths" aria-labelledby="guided-paths-title">
   <div class="guided-head">
     <div>
-      <h2 id="guided-paths-title">Guided Paths</h2>
-      <p>给第一次看的观众三条入口：先看一个断点，再顺着国家、公司、航道和栈节点读下去。导览只负责组织观看顺序，不把线索升级成结论。</p>
+      <h2 id="guided-paths-title" data-i18n="guidedTitle">导览路径</h2>
+      <p data-i18n="guidedText">给第一次看的观众三条入口：先看一个断点，再顺着国家、公司、航道和栈节点读下去。导览只负责组织观看顺序，不把线索升级成结论。</p>
     </div>
-    <span class="guided-source">viewer mode · v0.3</span>
+    <span class="guided-source" data-i18n="viewerMode">观看模式 v0.3</span>
   </div>
   <div class="guided-grid" id="guided-grid"></div>
 </section>
@@ -78,10 +81,10 @@
 <section class="overlap-lab" aria-labelledby="overlap-lab-title">
   <div class="overlap-head">
     <div>
-      <h2 id="overlap-lab-title">Cross-stack Overlap</h2>
-      <p>同一个现实对象会同时承载多个技术栈。这里把重叠关系显式摊开：不是新结论，而是把已有地图关系组织成可检查的传导结构。</p>
+      <h2 id="overlap-lab-title" data-i18n="overlapTitle">跨栈重叠</h2>
+      <p data-i18n="overlapText">同一个现实对象会同时承载多个技术栈。这里把重叠关系显式摊开：不是新结论，而是把已有地图关系组织成可检查的传导结构。</p>
     </div>
-    <span class="overlap-source">structure view · v0.4</span>
+    <span class="overlap-source" data-i18n="structureView">结构视图 v0.4</span>
   </div>
   <div class="overlap-shell">
     <div class="overlap-list" id="overlap-list"></div>
@@ -92,10 +95,10 @@
 <section class="transmission-lab" aria-labelledby="transmission-lab-title">
   <div class="transmission-head">
     <div>
-      <h2 id="transmission-lab-title">Dual-stack Transmission</h2>
-      <p>把技术断点、政治控制面、数量级、替代路径和国内/联盟反馈接成一条可检查的分析链。</p>
+      <h2 id="transmission-lab-title" data-i18n="transmissionTitle">双栈传导</h2>
+      <p data-i18n="transmissionText">把技术断点、政治控制面、数量级、替代路径和国内/联盟反馈接成一条可检查的分析链。</p>
     </div>
-    <span class="transmission-source">analysis grammar · v0.7</span>
+    <span class="transmission-source" data-i18n="analysisGrammar">分析语法 v0.7</span>
   </div>
   <div class="transmission-grid" id="transmission-grid"></div>
 </section>
@@ -103,30 +106,29 @@
 <section class="political-mag-lab" aria-labelledby="political-mag-title">
   <div class="political-mag-head">
     <div>
-      <h2 id="political-mag-title">Political MAG</h2>
-      <p>政治栈的数量级缺口：先把需要什么量纲、可能来源和证据状态摊开，不把未知数填成结论。</p>
+      <h2 id="political-mag-title" data-i18n="politicalMagTitle">政治数量级</h2>
+      <p data-i18n="politicalMagText">政治栈的数量级缺口：先把需要什么量纲、可能来源和证据状态摊开，不把未知数填成结论。</p>
     </div>
-    <span class="political-mag-source">schema draft · v0.8</span>
+    <span class="political-mag-source" data-i18n="schemaDraft">结构草案 v0.8</span>
   </div>
   <div class="political-mag-grid" id="political-mag-grid"></div>
 </section>
 
-<!-- 详情面板 -->
 <aside id="detail" class="detail">
   <div class="detail-empty" id="detail-empty">
-    <p>点左图的国家 / chokepoint，或右侧的技术栈 / 政治栈节点 / candidate alert。<br>三张图会同步点亮关联对象，这里显示它的关系、证据档与缺口。</p>
+    <p data-i18n="detailEmpty">点击左图的国家或航道，或右侧的技术栈、政治栈节点。三张图会同步点亮关联对象；这里显示关系、证据状态与缺口。</p>
   </div>
   <div class="detail-body hidden" id="detail-body"></div>
 </aside>
 
 <footer>
-  <span>证据档：</span>
+  <span data-i18n="evidenceLabel">证据状态：</span>
   <span class="ev ev-verified">verified</span>
   <span class="ev ev-source-linked">source-linked</span>
   <span class="ev ev-query-designed">query-designed</span>
   <span class="ev ev-needs-review">needs-review</span>
   <span class="ev ev-unknown">unknown</span>
-  <span class="foot-note">底图 Natural Earth 110m（公共领域）· 离线 · 无 token。关系数据为公开结构事实初填；证据状态显示在节点与详情面板中。</span>
+  <span class="foot-note" data-i18n="footNote">底图 Natural Earth 110m，公共领域。页面离线运行，不需要 token。关系数据为公开结构事实初填；证据状态显示在节点与详情面板中。</span>
 </footer>
 
 <script src="./assets/world-paths.js"></script>

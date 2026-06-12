@@ -9,12 +9,188 @@ const NAMES = window.WORLD_NAMES || {};
 const CENTROIDS = window.WORLD_CENTROIDS || {};
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const hasHan = (s) => /[\u3400-\u9fff]/.test(String(s ?? ""));
+let currentLang = localStorage.getItem("stack-atlas-lang") || "zh";
+const I18N = {
+  zh: {
+    subtitle: "技术栈、政治栈与世界地图",
+    honest: "公共可读的依赖<strong>探索</strong>界面，不是结论预言机。点国家、航道、技术栈节点或政治栈节点，三图双向点亮。候选告警只是待复查线索，不自动成结论；证据不足处显式标出，不藏。",
+    worldTitle: "世界地图",
+    worldSub: "真实世界底图，Natural Earth 110m，公共领域",
+    techTitle: "技术栈地图",
+    techSub: "L0-L4 分层栈；点击节点反向点亮世界地图",
+    politicalTitle: "政治栈地图",
+    politicalSub: "P0-P4 政治控制栈：法域、联盟、国内政治与叙事",
+    guidedTitle: "导览路径",
+    guidedText: "给第一次看的观众三条入口：先看一个断点，再顺着国家、公司、航道和栈节点读下去。导览只负责组织观看顺序，不把线索升级成结论。",
+    viewerMode: "观看模式 v0.3",
+    overlapTitle: "跨栈重叠",
+    overlapText: "同一个现实对象会同时承载多个技术栈。这里把重叠关系显式摊开：不是新结论，而是把已有地图关系组织成可检查的传导结构。",
+    structureView: "结构视图 v0.4",
+    transmissionTitle: "双栈传导",
+    transmissionText: "把技术断点、政治控制面、数量级、替代路径和国内/联盟反馈接成一条可检查的分析链。",
+    analysisGrammar: "分析语法 v0.7",
+    politicalMagTitle: "政治数量级",
+    politicalMagText: "政治栈的数量级缺口：先把需要什么量纲、可能来源和证据状态摊开，不把未知数填成结论。",
+    schemaDraft: "结构草案 v0.8",
+    detailEmpty: "点击左图的国家或航道，或右侧的技术栈、政治栈节点。三张图会同步点亮关联对象；这里显示关系、证据状态与缺口。",
+    evidenceLabel: "证据状态：",
+    footNote: "底图 Natural Earth 110m，公共领域。页面离线运行，不需要 token。关系数据为公开结构事实初填；证据状态显示在节点与详情面板中。",
+    reset: "复位",
+    zoomIn: "放大",
+    zoomOut: "缩小",
+    resetView: "复位视图",
+    map: "地图",
+    transmission: "传导",
+    evidence: "证据",
+    brief: "简报",
+    magOn: "MAG 开",
+    magOff: "MAG 关",
+    unavailable: "MAG 不可用",
+    all: "全部",
+    oil: "石油",
+    gates: "闸门",
+    minerals: "矿物",
+    cables: "光缆",
+    chips: "芯片",
+    blocked: "受阻",
+    country: "国家",
+    stackNode: "栈节点",
+    politicalNode: "政治栈节点",
+    chokepoint: "航道",
+    company: "公司",
+    relatedCountries: "相关国家",
+    stackNodes: "相关栈节点",
+    politicalNodes: "政治栈节点",
+    companies: "公司/机构",
+    affectedNodes: "受影响栈节点",
+    affectedCountries: "受影响国家",
+    role: "角色",
+    source: "来源",
+    nextStep: "下一步",
+    currentEvidence: "当前证据",
+    candidateAlert: "候选告警",
+    notConclusion: "这是候选线索，不是结论。请回原始来源核证后再判断。",
+    dataGaps: "数据缺口",
+    facts: "事实行",
+    blockers: "缺口",
+    substitutionLag: "替代滞后",
+    noFactRows: "本候选暂无可展示事实行。",
+    noCoverage: "本批数据包未覆盖此节点。",
+    magnitudeLayer: "数量级层",
+    fullMagnitudeBelow: "完整数量级卡在下方数量级层分区。"
+  },
+  en: {
+    subtitle: "Technology stacks, political stacks, and a world map",
+    honest: "A public dependency <strong>exploration</strong> interface, not an oracle. Click a country, chokepoint, technical-stack node, or political-stack node to light up the connected map layers. Candidate alerts are review leads, not conclusions; evidence gaps stay visible.",
+    worldTitle: "World Map",
+    worldSub: "Real-world basemap, Natural Earth 110m, public domain",
+    techTitle: "Technology Stack Map",
+    techSub: "L0-L4 layered stacks; click a node to light up the world map",
+    politicalTitle: "Political Stack Map",
+    politicalSub: "P0-P4 political-control stack: jurisdiction, alliances, domestic politics, narratives",
+    guidedTitle: "Guided Paths",
+    guidedText: "Three entry points for first-time viewers. Start with a breakpoint, then follow countries, companies, chokepoints, and stack nodes. Guided paths organize attention; they do not upgrade leads into conclusions.",
+    viewerMode: "Viewer mode v0.3",
+    overlapTitle: "Cross-stack Overlap",
+    overlapText: "One real-world object can carry several technical stacks. This view exposes overlap as an inspectable transmission structure, not as a new conclusion.",
+    structureView: "Structure view v0.4",
+    transmissionTitle: "Dual-stack Transmission",
+    transmissionText: "A checkable chain from technical breakpoint to political control plane, magnitude, substitution path, and domestic or alliance feedback.",
+    analysisGrammar: "Analysis grammar v0.7",
+    politicalMagTitle: "Political Magnitude",
+    politicalMagText: "Magnitude gaps for the political stack: required measures, possible sources, and evidence status are shown before unknowns become claims.",
+    schemaDraft: "Schema draft v0.8",
+    detailEmpty: "Click a country or chokepoint on the left, or a technical or political stack node on the right. The three maps light up related objects; this panel shows relationships, evidence status, and gaps.",
+    evidenceLabel: "Evidence status:",
+    footNote: "Basemap: Natural Earth 110m, public domain. The page runs offline and needs no token. Relationship data is a first public structural pass; evidence status appears on nodes and detail panels.",
+    reset: "Reset",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    resetView: "Reset view",
+    map: "Map",
+    transmission: "Transmission",
+    evidence: "Evidence",
+    brief: "Brief",
+    magOn: "MAG on",
+    magOff: "MAG off",
+    unavailable: "MAG unavailable",
+    all: "All",
+    oil: "Oil",
+    gates: "Gates",
+    minerals: "Minerals",
+    cables: "Cables",
+    chips: "Chips",
+    blocked: "Blocked",
+    country: "Country",
+    stackNode: "Stack node",
+    politicalNode: "Political stack node",
+    chokepoint: "Chokepoint",
+    company: "Company",
+    relatedCountries: "Related countries",
+    stackNodes: "Stack nodes",
+    politicalNodes: "Political nodes",
+    companies: "Companies",
+    affectedNodes: "Affected nodes",
+    affectedCountries: "Affected countries",
+    role: "Role",
+    source: "Source",
+    nextStep: "Next step",
+    currentEvidence: "Current evidence",
+    candidateAlert: "Candidate alert",
+    notConclusion: "This is a candidate lead, not a conclusion. Check the original sources before making a judgment.",
+    dataGaps: "Data gaps",
+    facts: "Facts",
+    blockers: "Blockers",
+    substitutionLag: "Substitution lag",
+    noFactRows: "No displayable fact rows yet.",
+    noCoverage: "This data pack does not cover this entity.",
+    magnitudeLayer: "Magnitude Layer",
+    fullMagnitudeBelow: "Full magnitude cards are shown in the Magnitude Layer section below."
+  }
+};
+const T = (key) => (I18N[currentLang] && I18N[currentLang][key]) || I18N.zh[key] || key;
+const localText = (zh, en) => currentLang === "zh" ? (zh || en || "") : (en || (hasHan(zh) ? "" : zh) || "");
+const localFree = (s, fallback = "") => currentLang === "zh" ? String(s ?? "") : (hasHan(s) ? fallback : String(s ?? ""));
+const byLang = (obj, base) => localText(obj?.[`${base}_zh`], obj?.[`${base}_en`] || obj?.[base]);
+const countryName = (code) => { const c = countryByCode.get(code); return c ? byLang(c, "name") : code; };
+const nodeLabel = (n) => byLang(n, "label") || n?.id || "";
+const stackName = (s) => byLang(s, "name") || s?.id || "";
+const layerLabel = (l) => byLang(l, "label") || l?.id || "";
+const chokeName = (c) => byLang(c, "name") || c?.id || "";
+function applyLanguageStatic() {
+  document.documentElement.lang = currentLang === "zh" ? "zh-Hans" : "en";
+  document.title = currentLang === "zh" ? "Stack Atlas - 技术栈、政治栈与世界地图" : "Stack Atlas - Technology and Political Stack Map";
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = T(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = T(el.dataset.i18nHtml); });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = T(el.dataset.i18nTitle); });
+  document.querySelectorAll("[data-lang-choice]").forEach(button => {
+    button.classList.toggle("active", button.dataset.langChoice === currentLang);
+    button.setAttribute("aria-pressed", String(button.dataset.langChoice === currentLang));
+  });
+}
+function setLanguage(lang) {
+  currentLang = lang === "en" ? "en" : "zh";
+  localStorage.setItem("stack-atlas-lang", currentLang);
+  applyLanguageStatic();
+  renderStackControls();
+  renderPoliticalControls();
+  renderStack();
+  renderPoliticalStack();
+  renderGuidedPaths();
+  renderOverlapLab();
+  renderTransmissionLab();
+  renderPoliticalMagLab();
+  renderMagnitudeControls();
+  applyViewMode();
+  if (current) renderDetail(current.type, current.id);
+}
 
 const VIEW_MODES = [
-  { id: "map", label: "Map" },
-  { id: "transmission", label: "Transmission" },
-  { id: "evidence", label: "Evidence" },
-  { id: "brief", label: "Brief" }
+  { id: "map", key: "map" },
+  { id: "transmission", key: "transmission" },
+  { id: "evidence", key: "evidence" },
+  { id: "brief", key: "brief" }
 ];
 let activeViewMode = "map";
 
@@ -229,13 +405,16 @@ const stackControls = document.getElementById("stack-controls");
 const politicalGrid = document.getElementById("political-grid");
 const politicalControls = document.getElementById("political-controls");
 let activeStack = D.stacks[0].id;
-D.stacks.forEach(stk => {
-  const b = document.createElement("button");
-  b.textContent = stk.name_zh + " / " + stk.name_en;
-  b.dataset.stack = stk.id;
-  b.addEventListener("click", () => { activeStack = stk.id; renderStack(); });
-  stackControls.appendChild(b);
-});
+function renderStackControls(){
+  stackControls.innerHTML = "";
+  D.stacks.forEach(stk => {
+    const b = document.createElement("button");
+    b.textContent = stackName(stk);
+    b.dataset.stack = stk.id;
+    b.addEventListener("click", () => { activeStack = stk.id; renderStack(); });
+    stackControls.appendChild(b);
+  });
+}
 function renderStack(){
   [...stackControls.children].forEach(b => b.classList.toggle("active", b.dataset.stack === activeStack));
   const stk = D.stacks.find(s => s.id === activeStack);
@@ -246,14 +425,14 @@ function renderStack(){
     const row = document.createElement("div"); row.className = `layer-row tech-stack-${stk.id} tech-layer-${layer.id}`;
     row.dataset.stackKind = stk.id;
     row.dataset.layer = layer.id;
-    row.innerHTML = `<div class="layer-name">${esc(layer.label_zh)} · ${esc(layer.label_en)}</div>`;
+    row.innerHTML = `<div class="layer-name">${esc(layerLabel(layer))}</div>`;
     const nr = document.createElement("div"); nr.className = "node-row";
     nodes.forEach(n => {
       const el = document.createElement("div");
       el.className = `node s-${n.status} tech-stack-${stk.id} tech-layer-${n.layer}`; el.dataset.node = n.id;
       el.dataset.stackKind = stk.id;
       el.dataset.layer = n.layer;
-      el.innerHTML = `<span class="nlabel">${esc(n.label_zh)}</span>
+      el.innerHTML = `<span class="nlabel">${esc(nodeLabel(n))}</span>
         <span class="nmeta"><span class="chip st-${n.status}">${esc(n.status)}</span><span class="ev ev-${n.evidence}">${esc(n.evidence)}</span>${magnitudeNodeBadge(n.id)}</span>`;
       el.addEventListener("click", e => { e.stopPropagation(); selectNode(n.id); });
       nr.appendChild(el);
@@ -264,13 +443,17 @@ function renderStack(){
 }
 
 let activePoliticalStack = D.politicalStacks?.[0]?.id || "";
-(D.politicalStacks || []).forEach(stk => {
-  const b = document.createElement("button");
-  b.textContent = stk.name_zh + " / " + stk.name_en;
-  b.dataset.politicalStack = stk.id;
-  b.addEventListener("click", () => { activePoliticalStack = stk.id; renderPoliticalStack(); });
-  politicalControls?.appendChild(b);
-});
+function renderPoliticalControls(){
+  if (!politicalControls) return;
+  politicalControls.innerHTML = "";
+  (D.politicalStacks || []).forEach(stk => {
+    const b = document.createElement("button");
+    b.textContent = stackName(stk);
+    b.dataset.politicalStack = stk.id;
+    b.addEventListener("click", () => { activePoliticalStack = stk.id; renderPoliticalStack(); });
+    politicalControls.appendChild(b);
+  });
+}
 
 function renderPoliticalStack(){
   if (!politicalGrid || !D.politicalStacks?.length) return;
@@ -282,13 +465,13 @@ function renderPoliticalStack(){
     if (!nodes.length) return;
     const row = document.createElement("div"); row.className = `player-row pol-layer-${layer.id}`;
     row.dataset.layer = layer.id;
-    row.innerHTML = `<div class="player-name">${esc(layer.label_zh)} · ${esc(layer.label_en)}</div>`;
+    row.innerHTML = `<div class="player-name">${esc(layerLabel(layer))}</div>`;
     const nr = document.createElement("div"); nr.className = "pnode-row";
     nodes.forEach(n => {
       const el = document.createElement("div");
       el.className = `pnode s-${n.status} pol-layer-${n.layer}`; el.dataset.pnode = n.id;
       el.dataset.layer = n.layer;
-      el.innerHTML = `<span class="nlabel">${esc(n.label_zh)}</span>
+      el.innerHTML = `<span class="nlabel">${esc(nodeLabel(n))}</span>
         <span class="nmeta"><span class="chip st-${n.status}">${esc(n.status)}</span><span class="ev ev-${n.evidence}">${esc(n.evidence)}</span></span>`;
       el.addEventListener("click", e => { e.stopPropagation(); selectPoliticalNode(n.id); });
       nr.appendChild(el);
@@ -306,13 +489,13 @@ document.getElementById("legend").innerHTML =
 let magnitudeEnabled = true;
 let magnitudeFilter = "all";
 const MAG_FILTERS = [
-  { id: "all", label: "all" },
-  { id: "oil", label: "oil", families: ["seaborne_oil_flow / oil_chokepoint_share"] },
-  { id: "gates", label: "gates", families: ["export_control_listings", "financial_sanctions_listings", "export_control_exposure", "internet_facility_inventory"] },
-  { id: "minerals", label: "minerals", families: ["minerals_net_import_reliance / minerals_supplier_country_share", "mineral_refining_share"] },
-  { id: "cables", label: "cables", families: ["cable_route_count"] },
-  { id: "chips", label: "chips", families: ["material_global_share", "ic_substrate_capacity", "euv_installed_base", "hbm_share_of_dram_revenue / memory_maker_revenue"] },
-  { id: "blocked", label: "blocked", matcher: c => ["blocked", "source-linked"].includes(c.evidence_status) || (c.gaps || []).some(g => ["blocked", "needs-api-key", "needs-extraction", "lead-only", "source-limited"].includes(g.status)) }
+  { id: "all", key: "all" },
+  { id: "oil", key: "oil", families: ["seaborne_oil_flow / oil_chokepoint_share"] },
+  { id: "gates", key: "gates", families: ["export_control_listings", "financial_sanctions_listings", "export_control_exposure", "internet_facility_inventory"] },
+  { id: "minerals", key: "minerals", families: ["minerals_net_import_reliance / minerals_supplier_country_share", "mineral_refining_share"] },
+  { id: "cables", key: "cables", families: ["cable_route_count"] },
+  { id: "chips", key: "chips", families: ["material_global_share", "ic_substrate_capacity", "euv_installed_base", "hbm_share_of_dram_revenue / memory_maker_revenue"] },
+  { id: "blocked", key: "blocked", matcher: c => ["blocked", "source-linked"].includes(c.evidence_status) || (c.gaps || []).some(g => ["blocked", "needs-api-key", "needs-extraction", "lead-only", "source-limited"].includes(g.status)) }
 ];
 
 // ---- highlight engine ----
@@ -496,7 +679,6 @@ document.body.addEventListener("click", () => { // click empty -> clear
 const detailBody = document.getElementById("detail-body");
 const detailEmpty = document.getElementById("detail-empty");
 function evChip(ev){ return `<span class="ev ev-${esc(ev)}">${esc(ev)}</span>`; }
-function countryName(code){ const c = countryByCode.get(code); return c ? `${c.name_zh}/${c.name_en}` : code; }
 function tagButtons(items, fn){ return `<div class="tagrow">${items.join("")}</div>`; }
 function relatedAlerts(pred){ return D.candidateAlerts.filter(pred); }
 
@@ -504,7 +686,7 @@ function renderViewToolbar() {
   const toolbar = document.getElementById("view-toolbar");
   if (!toolbar) return;
   toolbar.innerHTML = VIEW_MODES.map(mode => (
-    `<button type="button" class="${activeViewMode === mode.id ? "active" : ""}" data-view-mode="${esc(mode.id)}">${esc(mode.label)}</button>`
+    `<button type="button" class="${activeViewMode === mode.id ? "active" : ""}" data-view-mode="${esc(mode.id)}">${esc(T(mode.key))}</button>`
   )).join("");
   toolbar.querySelectorAll("[data-view-mode]").forEach(button => {
     button.addEventListener("click", e => {
@@ -526,19 +708,20 @@ function politicalMagFor(polnodeId) {
 
 function politicalMagCard(row) {
   const pn = politicalNodeById.get(row.polnode);
+  const metric = currentLang === "zh" ? row.metric : (nodeLabel(pn) || row.polnode);
   return `<article class="political-mag-card">
     <div class="political-mag-card-head">
       <div>
-        <h3>${esc(row.metric)}</h3>
-        <p>${esc(pn ? pn.label_zh : row.polnode)}</p>
+        <h3>${esc(metric)}</h3>
+        <p>${esc(pn ? nodeLabel(pn) : row.polnode)}</p>
       </div>
       <span class="ev ev-${evidenceClass(row.evidence_status)}">${esc(row.evidence_status)}</span>
     </div>
     <div class="mag-meta-row"><span class="mag-scale">${esc(row.scale_family)}</span></div>
-    <p>${esc(row.why)}</p>
-    <div class="political-mag-source-line">候选来源 / sources: ${esc(row.candidate_sources)}</div>
-    <div class="gap-strong">下一步：${esc(row.next_action)}</div>
-    <div class="tagrow"><button data-polnode="${esc(row.polnode)}">打开政治节点</button></div>
+    <p>${esc(localFree(row.why, "Evidence gap for this political-control layer."))}</p>
+    <div class="political-mag-source-line">${esc(T("source"))}: ${esc(row.candidate_sources)}</div>
+    <div class="gap-strong">${esc(T("nextStep"))}: ${esc(localFree(row.next_action, "Review source status."))}</div>
+    <div class="tagrow"><button data-polnode="${esc(row.polnode)}">${esc(T("politicalNode"))}</button></div>
   </article>`;
 }
 
@@ -568,6 +751,7 @@ const GUIDED_PATHS = [
     title_en: "Advanced compute is a chain of permission gates",
     start: { type: "node", id: "ac-export" },
     lead: "从出口管制开始看：美国法域、GPU、EDA、EUV、台湾制造和中国需求端会同时被点亮。这里要传递的是“控制面”如何压在物理制造之上。",
+    lead_en: "Start with export controls: U.S. jurisdiction, GPUs, EDA, EUV, Taiwan fabrication, and Chinese demand light up together. The point is how a control plane sits above physical manufacturing.",
     hops: [
       { type: "country", id: "US", label: "美国控制面" },
       { type: "polnode", id: "ps-export-control", label: "出口管制/许可" },
@@ -583,6 +767,7 @@ const GUIDED_PATHS = [
     title_en: "Hormuz converts disruption into expensive mode",
     start: { type: "chokepoint", id: "hormuz" },
     lead: "从霍尔木兹开始看：原油、LNG、东亚买家、油轮航道和战略储备会连到一起。重点不是马上断供，而是保险、绕航、替代管道和国家背书运输如何重新定价。",
+    lead_en: "Start with Hormuz: crude, LNG, East Asian buyers, tanker routes, and strategic reserves connect at once. The first effect is often repricing through insurance, rerouting, pipelines, and state-backed shipping.",
     hops: [
       { type: "country", id: "JP", label: "日本依赖端" },
       { type: "country", id: "KR", label: "韩国依赖端" },
@@ -598,6 +783,7 @@ const GUIDED_PATHS = [
     title_en: "Malacca overlaps energy lanes and cable reachability",
     start: { type: "chokepoint", id: "malacca" },
     lead: "从马六甲开始看：它同时触发东亚能源栈和互联网可达性栈。这里适合解释为什么 Stack Atlas 需要“多标签页 + 同一张地图”，因为不同技术栈会在同一个现实通道上重叠。",
+    lead_en: "Start with Malacca: it triggers the East Asia energy stack and the internet-reachability stack at the same time. Different technical stacks can overlap on one real-world corridor.",
     hops: [
       { type: "country", id: "SG", label: "新加坡接点密度" },
       { type: "polnode", id: "ps-naval-transit", label: "通道强制/护航能力" },
@@ -799,11 +985,11 @@ function selectGuide(pathId, hop = null) {
 function guideTargetLabel(target) {
   if (!target) return "";
   if (target.type === "country") return countryName(target.id);
-  if (target.type === "node") return nodeById.get(target.id)?.label_zh || target.id;
-  if (target.type === "polnode") return politicalNodeById.get(target.id)?.label_zh || target.id;
-  if (target.type === "chokepoint") return chokeById.get(target.id)?.name_zh || target.id;
+  if (target.type === "node") return nodeLabel(nodeById.get(target.id)) || target.id;
+  if (target.type === "polnode") return nodeLabel(politicalNodeById.get(target.id)) || target.id;
+  if (target.type === "chokepoint") return chokeName(chokeById.get(target.id)) || target.id;
   if (target.type === "company") return companyById.get(target.id)?.name || target.id;
-  if (target.type === "alert") return D.candidateAlerts.find(a => a.id === target.id)?.title_zh || target.id;
+  if (target.type === "alert") { const a = D.candidateAlerts.find(a => a.id === target.id); return localText(a?.title_zh, a?.title_en) || target.id; }
   return target.id;
 }
 
@@ -814,9 +1000,9 @@ function activeGuideBanner() {
   return `<section class="guide-context">
     <div>
       <span class="guide-context-kicker">${esc(path.kicker)}</span>
-      <strong>${esc(path.title_zh)}</strong>
+      <strong>${esc(localText(path.title_zh, path.title_en))}</strong>
     </div>
-    <p>${esc(path.lead)}</p>
+    <p>${esc(localText(path.lead, path.lead_en))}</p>
   </section>`;
 }
 
@@ -827,15 +1013,14 @@ function renderGuidedPaths() {
     const active = activeGuide?.pathId === path.id;
     const selected = active ? guideTargetLabel(activeGuide.target) : guideTargetLabel(path.start);
     const hopButtons = path.hops.map(h => (
-      `<button type="button" data-guide-hop="${esc(path.id)}" data-hop-type="${esc(h.type)}" data-hop-id="${esc(h.id)}">${esc(h.label)}</button>`
+      `<button type="button" data-guide-hop="${esc(path.id)}" data-hop-type="${esc(h.type)}" data-hop-id="${esc(h.id)}">${esc(localText(h.label, h.label_en) || guideTargetLabel(h))}</button>`
     )).join("");
     return `<article class="guided-card ${active ? "active" : ""}">
       <div class="guided-kicker">${esc(path.kicker)}</div>
-      <h3>${esc(path.title_zh)}</h3>
-      <p class="guided-en">${esc(path.title_en)}</p>
-      <p>${esc(path.lead)}</p>
+      <h3>${esc(localText(path.title_zh, path.title_en))}</h3>
+      <p>${esc(localText(path.lead, path.lead_en))}</p>
       <div class="guided-actions">
-        <button type="button" class="guided-start" data-guide="${esc(path.id)}">从这里开始 · ${esc(selected)}</button>
+        <button type="button" class="guided-start" data-guide="${esc(path.id)}">${currentLang === "zh" ? "从这里开始" : "Start here"}: ${esc(selected)}</button>
       </div>
       <div class="guided-hops">${hopButtons}</div>
     </article>`;
@@ -908,11 +1093,12 @@ function selectOverlap(id, focusTarget = null) {
 
 function overlapStackChip(stackId) {
   const stack = D.stacks.find(s => s.id === stackId);
-  return `<span class="overlap-stack">${esc(stack ? stack.name_zh : stackId)}</span>`;
+  return `<span class="overlap-stack">${esc(stack ? stackName(stack) : stackId)}</span>`;
 }
 
 function objectButton(obj, attrs = "") {
-  return `<button type="button" ${attrs} data-object-type="${esc(obj.type)}" data-object-id="${esc(obj.id)}">${esc(obj.label || guideTargetLabel(obj))}</button>`;
+  const label = localText(obj.label, obj.label_en) || guideTargetLabel(obj);
+  return `<button type="button" ${attrs} data-object-type="${esc(obj.type)}" data-object-id="${esc(obj.id)}">${esc(label)}</button>`;
 }
 
 function renderFlowStep(step, index, overlapId) {
@@ -923,8 +1109,8 @@ function renderFlowStep(step, index, overlapId) {
   return `<div class="flow-step">
     <div class="flow-num">${index + 1}</div>
     <div class="flow-copy">
-      <div class="flow-label">${esc(step.label)} ${ev}</div>
-      <p>${esc(step.body)}</p>
+      <div class="flow-label">${esc(localText(step.label, step.label_en) || `Step ${index + 1}`)} ${ev}</div>
+      <p>${esc(localText(step.body, step.body_en) || T("notConclusion"))}</p>
       ${action ? `<div class="flow-action">${action}</div>` : ""}
     </div>
   </div>`;
@@ -940,20 +1126,19 @@ function renderOverlapLab() {
     return `<article class="overlap-card ${active ? "active" : ""}">
       <div class="overlap-card-head">
         <div>
-          <h3>${esc(overlap.title_zh)}</h3>
-          <p>${esc(overlap.title_en)}</p>
+          <h3>${esc(localText(overlap.title_zh, overlap.title_en))}</h3>
         </div>
-        <button type="button" class="overlap-start" data-overlap="${esc(overlap.id)}">点亮</button>
+        <button type="button" class="overlap-start" data-overlap="${esc(overlap.id)}">${currentLang === "zh" ? "点亮" : "Highlight"}</button>
       </div>
       <div class="overlap-stacks">${overlap.stacks.map(overlapStackChip).join("")}</div>
-      <p class="overlap-thesis">${esc(overlap.thesis)}</p>
+      <p class="overlap-thesis">${esc(localText(overlap.thesis, overlap.thesis_en) || T("overlapText"))}</p>
       <div class="overlap-objects">${objects}</div>
     </article>`;
   }).join("");
   const active = activeOverlap ? overlapById(activeOverlap.id) : CROSS_STACK_OVERLAPS[0];
   panel.innerHTML = active ? `<div class="flow-head">
-      <span>Scenario Flow</span>
-      <strong>${esc(active.title_zh)}</strong>
+      <span>${esc(T("transmissionTitle"))}</span>
+      <strong>${esc(localText(active.title_zh, active.title_en))}</strong>
     </div>
     <div class="flow-steps">${active.flow.map((step, index) => renderFlowStep(step, index, active.id)).join("")}</div>` : "";
 
@@ -989,25 +1174,25 @@ function renderOverlapDetail(overlap, focusTarget) {
   const objects = overlap.objects.map(obj => objectButton(obj, `data-overlap-object="${esc(overlap.id)}"`)).join("");
   detailBody.innerHTML = `<section class="guide-context overlap-context">
       <div>
-        <span class="guide-context-kicker">Cross-stack Overlap</span>
-        <strong>${esc(overlap.title_zh)}</strong>
+        <span class="guide-context-kicker">${esc(T("overlapTitle"))}</span>
+        <strong>${esc(localText(overlap.title_zh, overlap.title_en))}</strong>
       </div>
-      <p>${esc(overlap.thesis)}</p>
+      <p>${esc(localText(overlap.thesis, overlap.thesis_en) || T("overlapText"))}</p>
     </section>
-    <div class="detail-kind">结构视图 / Structure view</div>
-    <h3>${esc(overlap.title_zh)} <span class="ev ev-needs-review">structure view</span></h3>
+    <div class="detail-kind">${esc(T("structureView"))}</div>
+    <h3>${esc(localText(overlap.title_zh, overlap.title_en))} <span class="ev ev-needs-review">structure view</span></h3>
     <section class="narrative-card">
-      <h4>What this means · 观众导览</h4>
-      <p>${esc(overlap.thesis)}</p>
-      <p><strong>当前焦点：</strong>${esc(guideTargetLabel(focusTarget))}。</p>
-      <p><strong>边界：</strong>这里展示已有 Atlas 对象之间的重叠关系；具体比例、时间、容量仍以各对象的 MAG / EAE / source-linked 证据为准。</p>
+      <h4>${esc(currentLang === "zh" ? "这意味着什么" : "What this means")}</h4>
+      <p>${esc(localText(overlap.thesis, overlap.thesis_en) || T("overlapText"))}</p>
+      <p><strong>${esc(currentLang === "zh" ? "当前焦点" : "Current focus")}:</strong> ${esc(guideTargetLabel(focusTarget))}</p>
+      <p><strong>${esc(currentLang === "zh" ? "边界" : "Boundary")}:</strong> ${esc(currentLang === "zh" ? "这里展示已有 Atlas 对象之间的重叠关系；具体比例、时间、容量仍以各对象的 MAG / EAE / source-linked 证据为准。" : "This view shows overlap among existing Atlas objects. Specific ratios, timing, and capacity still depend on each object's MAG, EAE, and source-linked evidence.")}</p>
     </section>
     <div class="detail-grid">
-      <div class="dcard"><h4>涉及技术栈</h4><div class="tagrow">${overlap.stacks.map(overlapStackChip).join("")}</div></div>
-      <div class="dcard"><h4>涉及对象</h4><div class="tagrow">${objects}</div></div>
+      <div class="dcard"><h4>${esc(currentLang === "zh" ? "涉及技术栈" : "Involved stacks")}</h4><div class="tagrow">${overlap.stacks.map(overlapStackChip).join("")}</div></div>
+      <div class="dcard"><h4>${esc(currentLang === "zh" ? "涉及对象" : "Involved objects")}</h4><div class="tagrow">${objects}</div></div>
     </div>
     <section class="scenario-detail">
-      <h4>Scenario Flow · 传导链</h4>
+      <h4>${esc(T("transmissionTitle"))}</h4>
       ${overlap.flow.map((step, index) => renderFlowStep(step, index, overlap.id)).join("")}
     </section>`;
   detailBody.querySelectorAll("[data-overlap-object],[data-flow-overlap]").forEach(button => {
@@ -1039,7 +1224,9 @@ function renderTransmissionLab(activeId = null, activeStep = null) {
   if (!grid) return;
   grid.innerHTML = DUAL_STACK_TRANSMISSIONS.map(transmission => {
     const active = activeId === transmission.id;
-    const steps = transmission.chain.map((step, index) => {
+    const steps = currentLang === "en"
+      ? `<div class="transmission-step"><span>${esc(T("transmissionTitle"))}</span><strong>${esc(transmission.title_en)}</strong><em>${esc(T("transmissionText"))}</em></div>`
+      : transmission.chain.map((step, index) => {
       const selected = active && activeStep === index;
       return `<button type="button" class="transmission-step ${selected ? "active" : ""}" data-transmission="${esc(transmission.id)}" data-step="${index}">
         <span>${esc(step.role)}</span>
@@ -1049,11 +1236,10 @@ function renderTransmissionLab(activeId = null, activeStep = null) {
     }).join("");
     return `<article class="transmission-card ${active ? "active" : ""}">
       <div class="transmission-card-head">
-        <span>Dual-stack chain</span>
-        <h3>${esc(transmission.title_zh)}</h3>
-        <p>${esc(transmission.title_en)}</p>
+        <span>${esc(T("transmissionTitle"))}</span>
+        <h3>${esc(localText(transmission.title_zh, transmission.title_en))}</h3>
       </div>
-      <p class="transmission-thesis">${esc(transmission.thesis)}</p>
+      <p class="transmission-thesis">${esc(localText(transmission.thesis, transmission.thesis_en) || T("transmissionText"))}</p>
       <div class="transmission-chain">${steps}</div>
     </article>`;
   }).join("");
@@ -1067,9 +1253,9 @@ function renderTransmissionLab(activeId = null, activeStep = null) {
 
 function alertCard(a){
   return `<div class="alert-card">
-    <div class="atitle">${esc(a.title_zh)} · ${esc(a.title_en)} <span class="ev ev-needs-review">${esc(a.status)}</span></div>
-    <div class="asig">${esc(a.signal_zh)}</div>
-    <button data-alert="${esc(a.id)}">在地图上点亮 →</button>
+    <div class="atitle">${esc(localText(a.title_zh, a.title_en))} <span class="ev ev-needs-review">${esc(a.status)}</span></div>
+    <div class="asig">${esc(localText(a.signal_zh, a.signal_en))}</div>
+    <button data-alert="${esc(a.id)}">${esc(currentLang === "zh" ? "在地图上点亮" : "Highlight on map")} →</button>
   </div>`;
 }
 
@@ -1544,15 +1730,15 @@ function renderMagnitudeControls() {
   if (!toggle || !group) return;
   if (!MAG) {
     toggle.disabled = true;
-    toggle.textContent = "MAG unavailable";
+    toggle.textContent = T("unavailable");
     return;
   }
-  toggle.textContent = magnitudeEnabled ? "MAG on" : "MAG off";
+  toggle.textContent = magnitudeEnabled ? T("magOn") : T("magOff");
   toggle.classList.toggle("active", magnitudeEnabled);
   toggle.setAttribute("aria-pressed", String(magnitudeEnabled));
   group.innerHTML = MAG_FILTERS.map(filter => {
     const active = magnitudeFilter === filter.id;
-    return `<button type="button" class="${active ? "active" : ""}" data-mag-filter="${esc(filter.id)}">${esc(filter.label)}</button>`;
+    return `<button type="button" class="${active ? "active" : ""}" data-mag-filter="${esc(filter.id)}">${esc(T(filter.key))}</button>`;
   }).join("");
   group.querySelectorAll("[data-mag-filter]").forEach(button => {
     button.addEventListener("click", e => {
@@ -1704,7 +1890,17 @@ function renderMagnitudeLayerBlock(type, id) {
   </section>`;
 }
 
+document.querySelectorAll("[data-lang-choice]").forEach(button => {
+  button.addEventListener("click", e => {
+    e.stopPropagation();
+    setLanguage(button.dataset.langChoice);
+  });
+});
+
 // init
+applyLanguageStatic();
+renderStackControls();
+renderPoliticalControls();
 renderMagnitudeControls();
 applyMapTransform();
 renderStack();

@@ -22,9 +22,13 @@ body{
   display:flex; flex-direction:column; min-height:100vh;
 }
 header{padding:16px clamp(14px,3vw,28px) 12px; border-bottom:1px solid var(--line); background:var(--panel)}
-.head-row{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.head-row{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap}
 h1{margin:0; font-size:22px; letter-spacing:.02em; font-weight:750}
 .sub{color:var(--muted); font-size:13px}
+.head-actions{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.lang-switch{display:inline-flex; gap:4px; padding:4px; border:1px solid var(--line2); border-radius:8px; background:#0f1520}
+.lang-switch button{appearance:none; border:0; border-radius:6px; background:transparent; color:var(--muted); padding:5px 10px; font:inherit; font-size:12px; font-weight:750; cursor:pointer}
+.lang-switch button.active{background:#243149; color:var(--ink)}
 .honest{margin:8px 0 0; color:var(--muted); font-size:12.5px; max-width:1100px}
 .honest strong{color:var(--ink)}
 .legend{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
